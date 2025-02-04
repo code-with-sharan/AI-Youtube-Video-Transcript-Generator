@@ -11,6 +11,7 @@ export default function Homepage() {
   const [gptResponse, setGptResponse] = useState("") // gpt response
   const [chatHistory, setChatHistory] = useState([{id: "", userQuestion: "", gptResponse: ""}]) // chat history
   const chatBoxRef = useRef(null)
+  const inputRef = useRef(null)
 
   // Scroll to bottom of chat whenever chatHistory updates
   useEffect(() => {
@@ -20,7 +21,10 @@ export default function Homepage() {
         behavior: 'smooth'
       });
     }
-  }, [chatHistory]);
+    if (inputRef.current) {
+        inputRef.current.value = "" // Clear input using ref
+      }
+  }, [chatHistory, inputRef]);
 
   // function to extract the video id from the youtube url
   function extractVideoId(url) {
@@ -61,7 +65,7 @@ export default function Homepage() {
       setGptResponse(response.data.data)
       console.log("gptResponse is: ", response.data.data)
       setChatHistory([...chatHistory, { id, userQuestion: question, gptResponse: response.data.data}])
-      setQuestion("") // Clear the question input after sending
+      
     } else {
       setGptResponse("Error fetching response")
     }
@@ -139,7 +143,7 @@ export default function Homepage() {
                           </div>
                         )}
                         {/* GPT Response */}
-                        {message.gptResponse && (
+                        {message.gptResponse ? (
                           <div className="flex text-left justify-start">
                             <div className="bg-purple-500 text-white px-4 py-2 rounded-lg max-w-[80%]">
                               <Markdown
@@ -151,12 +155,22 @@ export default function Homepage() {
                               >{message.gptResponse}</Markdown>
                             </div>
                           </div>
+                        ) : message.userQuestion && (
+                          <div className="flex text-left justify-start">
+                            <div className="bg-purple-500 text-white px-4 py-2 rounded-lg max-w-[80%]">
+                              <div className="flex items-center">
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                Generating answer
+                              </div>
+                            </div>
+                          </div>
                         )}
                       </div>
                     ))}
                   </div>
                   <form onSubmit={handleSend} className="flex gap-2">
                     <input
+                      ref={inputRef}
                       type="text"
                       value={question}
                       required
