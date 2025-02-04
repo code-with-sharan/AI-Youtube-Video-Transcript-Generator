@@ -13,6 +13,7 @@ export const getCaptions = async (req, res) => {
         const textCaptions = captions.map(caption => caption.text).join(" ")
         res.json({ success: true, data: textCaptions })
     } catch (error) {
+        console.log(error)
         res.json({ success: false, error: error })
     }
 }
