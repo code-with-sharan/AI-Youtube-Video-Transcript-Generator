@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react"
 import axios from "axios"
 import { v4 as uuidv4 } from "uuid"
 import Markdown from 'react-markdown'
-// const BACKEND_URL = "http://localhost:8090/api"
+// const BACKEND_URL = "http://localhost:8090"
 const BACKEND_URL = "https://ai-youtube-video-transcript-generator.onrender.com"
 
 export default function Homepage() {
@@ -65,7 +65,7 @@ export default function Homepage() {
     setLoading(true)
     const videoId = extractVideoId(youtubeUrl)
 
-    const response = await axios.post(`${BACKEND_URL}/transcript`, {
+    const response = await axios.post(`${BACKEND_URL}/api/transcript`, {
       videoId,
     })
     if(response.data.success) { 
@@ -91,7 +91,7 @@ export default function Homepage() {
     const id = uuidv4()
     setChatHistory([...chatHistory, {id, userQuestion: question, gptResponse: ""}])
 
-    const response = await axios.post(`${BACKEND_URL}/gpt-response`, {
+    const response = await axios.post(`${BACKEND_URL}/api/gpt-response`, {
       transcript,
       question,
     })
