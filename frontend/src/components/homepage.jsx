@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import axios from "axios"
 import { v4 as uuidv4 } from "uuid"
 import Markdown from 'react-markdown'
@@ -10,9 +10,17 @@ export default function Homepage() {
   const [question, setQuestion] = useState("") // user question
   const [gptResponse, setGptResponse] = useState("") // gpt response
   const [chatHistory, setChatHistory] = useState([{id: "", userQuestion: "", gptResponse: ""}]) // chat history
-  // I want to store the question and gpt response in the chatHistory array like this: 
-  // [{id: "id", question: "user question", gptResponse: "gpt response"}]
-  // so that I can display that in the chat box
+  const chatBoxRef = useRef(null)
+
+  // Scroll to bottom of chat whenever chatHistory updates
+  useEffect(() => {
+    if (chatBoxRef.current) {
+      chatBoxRef.current.scrollTo({
+        top: chatBoxRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
+  }, [chatHistory]);
 
   // function to extract the video id from the youtube url
   function extractVideoId(url) {
@@ -117,7 +125,7 @@ export default function Homepage() {
               <div className="bg-gray-800 rounded-xl p-6 shadow-xl border border-gray-700">
                 <h2 className="text-xl font-semibold mb-4 text-gray-200">Chat with GPT</h2>
                 <div className="bg-gray-900 rounded-lg p-4 h-[500px] flex flex-col">
-                  <div className="flex-1 overflow-y-auto mb-4">
+                  <div ref={chatBoxRef} className="flex-1 overflow-y-auto mb-4">
                     {/* Chat messages would go here */}
                     {chatHistory.map((message) => (
                       <div key={message.id} className="mb-4">
@@ -146,19 +154,20 @@ export default function Homepage() {
                       </div>
                     ))}
                   </div>
-                  <div className="flex gap-2">
+                  <form onSubmit={handleSend} className="flex gap-2">
                     <input
                       type="text"
                       value={question}
+                      required
                       onChange={(e) => setQuestion(e.target.value)}
                       disabled={loading}
                       placeholder="Ask something about the video..."
                       className="flex-1 px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 focus:outline-none focus:border-blue-500 text-white placeholder-gray-400"
                     />
-                    <button onClick={handleSend} disabled={loading} className="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold transition duration-300">
+                    <button type="submit" disabled={loading} className="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold transition duration-300">
                       Send
                     </button>
-                  </div>
+                  </form>
                 </div>
               </div>
             </div>
