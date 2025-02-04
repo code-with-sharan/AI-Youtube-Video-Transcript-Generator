@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from "react"
 import axios from "axios"
 import { v4 as uuidv4 } from "uuid"
 import Markdown from 'react-markdown'
-const BACKEND_URL = "http://localhost:8090/api"
+// const BACKEND_URL = "http://localhost:8090/api"
+const BACKEND_URL = "https://ai-youtube-video-transcript-generator.onrender.com"
 
 export default function Homepage() {
   // Load initial state from localStorage if available
