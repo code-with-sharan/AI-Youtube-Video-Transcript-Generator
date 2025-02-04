@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react"
 import axios from "axios"
 import { v4 as uuidv4 } from "uuid"
 import Markdown from 'react-markdown'
+const BACKEND_URL = "http://localhost:8090/api"
 
 export default function Homepage() {
   // Load initial state from localStorage if available
@@ -21,7 +22,7 @@ export default function Homepage() {
     return saved ? JSON.parse(saved) : [{id: "", userQuestion: "", gptResponse: ""}]
   })
   const chatBoxRef = useRef(null)
-  const inputRef = useRef(null)
+  const inputRef = useRef(null) 
 
   // Save state to localStorage whenever it changes
   useEffect(() => {
@@ -62,7 +63,7 @@ export default function Homepage() {
     setLoading(true)
     const videoId = extractVideoId(youtubeUrl)
 
-    const response = await axios.post("http://localhost:8090/api/transcript", {
+    const response = await axios.post(`${BACKEND_URL}/transcript`, {
       videoId,
     })
     if(response.data.success) { 
@@ -87,7 +88,7 @@ export default function Homepage() {
     const id = uuidv4()
     setChatHistory([...chatHistory, {id, userQuestion: question, gptResponse: ""}])
 
-    const response = await axios.post("http://localhost:8090/api/gpt-response", {
+    const response = await axios.post(`${BACKEND_URL}/gpt-response`, {
       transcript,
       question,
     })

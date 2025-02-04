@@ -61,7 +61,6 @@ User Question: """${question}"""
 
         const result = await model.generateContent(prompt);
         const gptResponse = result.response.text()
-        console.log("gptResponse is: ", gptResponse)
         res.json({ success: true, data: gptResponse })
     } catch (error) {
         res.json({ success: false, error: error })
