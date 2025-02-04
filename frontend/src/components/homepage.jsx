@@ -77,6 +77,7 @@ export default function Homepage() {
           </h1>
           <p className="text-xl text-gray-300 mb-12">
             Get accurate transcripts from any YouTube video in seconds
+            <br /> and chat with the AI assistant
           </p>
           
           {/* Search Form */}
@@ -117,7 +118,7 @@ export default function Homepage() {
               <div className="bg-gray-800 rounded-xl p-6 shadow-xl border border-gray-700">
                 <h2 className="text-xl font-semibold mb-4 text-gray-200">Generated Transcript</h2>
                 <div className="bg-gray-900 rounded-lg p-4 h-[500px] overflow-y-auto">
-                  <p className="text-gray-300 whitespace-pre-line">{transcript}</p>
+                  <p className="text-gray-300 text-justify whitespace-pre-line">{transcript}</p>
                 </div>
               </div>
 
@@ -176,9 +177,9 @@ export default function Homepage() {
       </div>
 
       {/* Footer */}
-      <footer className="mt-20 py-8 border-t border-gray-800">
+      <footer className={`${!transcript ? "fixed" : ""} bottom-0 left-0 right-0 py-8 border-t border-gray-800`}>
         <div className="max-w-7xl mx-auto px-4 text-center text-gray-400">
-          <p>© 2024 YouTube Transcript Generator. All rights reserved.</p>
+          <p>Made with ❤️ by Sharan</p>
         </div>
       </footer>
     </div>
