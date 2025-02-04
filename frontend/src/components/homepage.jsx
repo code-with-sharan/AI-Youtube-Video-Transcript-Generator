@@ -4,14 +4,37 @@ import { v4 as uuidv4 } from "uuid"
 import Markdown from 'react-markdown'
 
 export default function Homepage() {
-  const [youtubeUrl, setYoutubeUrl] = useState("") // youtube video url
-  const [transcript, setTranscript] = useState("") // transcript of the youtube video
-  const [loading, setLoading] = useState(false) // loading state
-  const [question, setQuestion] = useState("") // user question
-  const [gptResponse, setGptResponse] = useState("") // gpt response
-  const [chatHistory, setChatHistory] = useState([{id: "", userQuestion: "", gptResponse: ""}]) // chat history
+  // Load initial state from localStorage if available
+  const [youtubeUrl, setYoutubeUrl] = useState(() => {
+    const saved = localStorage.getItem('youtubeUrl')
+    return saved || ""
+  })
+  const [transcript, setTranscript] = useState(() => {
+    const saved = localStorage.getItem('transcript')
+    return saved || ""
+  })
+  const [loading, setLoading] = useState(false)
+  const [question, setQuestion] = useState("")
+  const [gptResponse, setGptResponse] = useState("")
+  const [chatHistory, setChatHistory] = useState(() => {
+    const saved = localStorage.getItem('chatHistory')
+    return saved ? JSON.parse(saved) : [{id: "", userQuestion: "", gptResponse: ""}]
+  })
   const chatBoxRef = useRef(null)
   const inputRef = useRef(null)
+
+  // Save state to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('youtubeUrl', youtubeUrl)
+  }, [youtubeUrl])
+
+  useEffect(() => {
+    localStorage.setItem('transcript', transcript)
+  }, [transcript])
+
+  useEffect(() => {
+    localStorage.setItem('chatHistory', JSON.stringify(chatHistory))
+  }, [chatHistory])
 
   // Scroll to bottom of chat whenever chatHistory updates
   useEffect(() => {
@@ -44,6 +67,13 @@ export default function Homepage() {
     })
     if(response.data.success) { 
       setTranscript(response.data.data)
+      // Reset chat history when new transcript is loaded
+      setChatHistory([{id: "", userQuestion: "", gptResponse: ""}])
+      // Clear chat input if there's any text
+      if (inputRef.current) {
+        inputRef.current.value = ""
+        setQuestion("")
+      }
       setLoading(false)
     } else {
       setTranscript("Error fetching captions")
