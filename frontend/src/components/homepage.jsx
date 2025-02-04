@@ -6,23 +6,24 @@ const BACKEND_URL = "http://localhost:8090/api"
 
 export default function Homepage() {
   // Load initial state from localStorage if available
-  const [youtubeUrl, setYoutubeUrl] = useState(() => {
+  const [youtubeUrl, setYoutubeUrl] = useState(() => { // youtube video url
     const saved = localStorage.getItem('youtubeUrl')
     return saved || ""
   })
-  const [transcript, setTranscript] = useState(() => {
+  const [transcript, setTranscript] = useState(() => { // transcript of the youtube video
     const saved = localStorage.getItem('transcript')
     return saved || ""
   })
-  const [loading, setLoading] = useState(false)
-  const [question, setQuestion] = useState("")
-  const [gptResponse, setGptResponse] = useState("")
-  const [chatHistory, setChatHistory] = useState(() => {
+  const [loading, setLoading] = useState(false) // loading state
+  const [question, setQuestion] = useState("") // user question
+  const [gptResponse, setGptResponse] = useState("") // gpt response
+  const [isGenerating, setIsGenerating] = useState(false) // state of generating response in chatbox
+  const [chatHistory, setChatHistory] = useState(() => { // chat history
     const saved = localStorage.getItem('chatHistory')
     return saved ? JSON.parse(saved) : [{id: "", userQuestion: "", gptResponse: ""}]
   })
-  const chatBoxRef = useRef(null)
-  const inputRef = useRef(null) 
+  const chatBoxRef = useRef(null) // reference to chatbox
+  const inputRef = useRef(null) // reference to input field 
 
   // Save state to localStorage whenever it changes
   useEffect(() => {
@@ -85,6 +86,7 @@ export default function Homepage() {
   // function to send the question to the gpt and get the response
   const handleSend = async (e) => {
     e.preventDefault()
+    setIsGenerating(true)
     const id = uuidv4()
     setChatHistory([...chatHistory, {id, userQuestion: question, gptResponse: ""}])
 
@@ -100,6 +102,7 @@ export default function Homepage() {
     } else {
       setGptResponse("Error fetching response")
     }
+    setIsGenerating(false)
   }
 
   return (
@@ -206,11 +209,11 @@ export default function Homepage() {
                       value={question}
                       required
                       onChange={(e) => setQuestion(e.target.value)}
-                      disabled={loading}
+                      disabled={loading || isGenerating}
                       placeholder="Ask something about the video..."
                       className="flex-1 px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 focus:outline-none focus:border-blue-500 text-white placeholder-gray-400"
                     />
-                    <button type="submit" disabled={loading} className="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold transition duration-300">
+                    <button type="submit" disabled={loading || isGenerating} className="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
                       Send
                     </button>
                   </form>
