@@ -2,8 +2,8 @@ import { useState, useEffect, useRef } from "react"
 import axios from "axios"
 import { v4 as uuidv4 } from "uuid"
 import Markdown from 'react-markdown'
-// const BACKEND_URL = "http://localhost:8090"
-const BACKEND_URL = "https://ai-youtube-video-transcript-generator.onrender.com"
+const BACKEND_URL = "http://localhost:8090"
+// const BACKEND_URL = "https://ai-youtube-video-transcript-generator.onrender.com"
 
 export default function Homepage() {
   // Load initial state from localStorage if available
@@ -153,18 +153,34 @@ export default function Homepage() {
         {transcript && (
           <div className="mt-12 max-w-7xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Transcript Box */}
-              <div className="bg-gray-800 rounded-xl p-6 shadow-xl border border-gray-700">
-                <h2 className="text-xl font-semibold mb-4 text-gray-200">Generated Transcript</h2>
-                <div className="bg-gray-900 rounded-lg p-4 h-[500px] overflow-y-auto">
-                  <p className="text-gray-300 text-justify whitespace-pre-line">{transcript}</p>
+              {/* Left Section - Video and Transcript */}
+              <div className="flex flex-col gap-6">
+                {/* Embedded Video */}
+                <div className="bg-gray-800 rounded-xl p-6 shadow-xl border border-gray-700">
+                  <h2 className="text-xl font-semibold mb-4 text-gray-200">Video</h2>
+                  <div className="aspect-w-16 aspect-h-9">
+                    <iframe
+                      src={`https://www.youtube.com/embed/${extractVideoId(youtubeUrl)}`}
+                      className="w-full h-[300px] rounded-lg"
+                      allowFullScreen
+                      title="YouTube video player"
+                    />
+                  </div>
+                </div>
+                
+                {/* Transcript Box */}
+                <div className="bg-gray-800 rounded-xl p-6 shadow-xl border border-gray-700">
+                  <h2 className="text-xl font-semibold mb-4 text-gray-200">Generated Transcript</h2>
+                  <div className="bg-gray-900 rounded-lg p-4 h-[300px] overflow-y-auto">
+                    <p className="text-gray-300 text-justify whitespace-pre-line">{transcript}</p>
+                  </div>
                 </div>
               </div>
 
-              {/* Chat Box */}
+              {/* Right Section - Chat Box */}
               <div className="bg-gray-800 rounded-xl p-6 shadow-xl border border-gray-700">
                 <h2 className="text-xl font-semibold mb-4 text-gray-200">Chat with GPT</h2>
-                <div className="bg-gray-900 rounded-lg p-4 h-[500px] flex flex-col">
+                <div className="bg-gray-900 rounded-lg p-4 h-[700px] flex flex-col">
                   <div ref={chatBoxRef} className="flex-1 overflow-y-auto mb-4">
                     {/* Chat messages would go here */}
                     {chatHistory.map((message) => (
