@@ -13,7 +13,11 @@ export const getCaptions = async (req, res) => {
         // Extracting start time and text from the captions
         let dataArray = []
         captions.forEach(caption => {
-            dataArray.push({start: caption.start, text: caption.text})
+            // converting start time to minutes and seconds and pushing to dataArray
+            // let minutes = Math.floor(caption.start / 60).toString().padStart(2, '0') // padStart(2, '0') adds leading zero if minutes/seconds are single digit
+            // let seconds = Math.floor(caption.start % 60).toString().padStart(2, '0')
+            // dataArray.push({start: `${minutes}:${seconds}`, text: caption.text})
+            dataArray.push({start: caption.start, text: caption.text}) // return total seconds
         })
         
         console.log(dataArray)

@@ -1,32 +1,36 @@
-import { useState, useEffect, useRef } from "react"
-import axios from "axios"
-import { v4 as uuidv4 } from "uuid"
-import Markdown from 'react-markdown'
-const BACKEND_URL = "http://localhost:8090"
+import { useState, useEffect, useRef } from "react";
+import axios from "axios";
+import { v4 as uuidv4 } from "uuid";
+import Markdown from "react-markdown";
+const BACKEND_URL = "http://localhost:8090";
 // const BACKEND_URL = "https://ai-youtube-video-transcript-generator.onrender.com"
+import YouTube from "react-youtube";
 
 export default function Homepage() {
-  const [youtubeUrl, setYoutubeUrl] = useState("") // youtube video url
-  const [transcript, setTranscript] = useState([]) // transcript of the youtube video
-  const [loading, setLoading] = useState(false) // loading state
-  const [question, setQuestion] = useState("") // user question
-  const [gptResponse, setGptResponse] = useState("") // gpt response
-  const [isGenerating, setIsGenerating] = useState(false) // state of generating response in chatbox
-  const [chatHistory, setChatHistory] = useState([{id: "", userQuestion: "", gptResponse: ""}]) // chat history
-  const chatBoxRef = useRef(null) // reference to chatbox
-  const inputRef = useRef(null) // reference to input field 
+  const [youtubeUrl, setYoutubeUrl] = useState(""); // youtube video url
+  const [transcript, setTranscript] = useState([]); // transcript of the youtube video
+  const [loading, setLoading] = useState(false); // loading state
+  const [question, setQuestion] = useState(""); // user question
+  const [gptResponse, setGptResponse] = useState(""); // gpt response
+  const [isGenerating, setIsGenerating] = useState(false); // state of generating response in chatbox
+  const [chatHistory, setChatHistory] = useState([
+    { id: "", userQuestion: "", gptResponse: "" },
+  ]); // chat history
+  const chatBoxRef = useRef(null); // reference to chatbox
+  const inputRef = useRef(null); // reference to input field
+  const youtubePlayerRef = useRef(null);
 
   // Scroll to bottom of chat whenever chatHistory updates
   useEffect(() => {
     if (chatBoxRef.current) {
       chatBoxRef.current.scrollTo({
         top: chatBoxRef.current.scrollHeight,
-        behavior: 'smooth'
+        behavior: "smooth",
       });
     }
     if (inputRef.current) {
-        inputRef.current.value = "" // Clear input using ref
-      }
+      inputRef.current.value = ""; // Clear input using ref
+    }
   }, [chatHistory, inputRef]);
 
   // function to extract the video id from the youtube url
@@ -38,52 +42,55 @@ export default function Homepage() {
 
   // function to submit the youtube url and get the transcript
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setLoading(true)
-    const videoId = extractVideoId(youtubeUrl)
+    e.preventDefault();
+    setLoading(true);
+    const videoId = extractVideoId(youtubeUrl);
 
     const response = await axios.post(`${BACKEND_URL}/api/transcript`, {
       videoId,
-    })
-    if(response.data.success) { 
-        setTranscript(response.data.data)
-        console.log(transcript)
+    });
+    if (response.data.success) {
+      setTranscript(response.data.data);
 
       // Reset chat history when new transcript is loaded
-      setChatHistory([{id: "", userQuestion: "", gptResponse: ""}])
+      setChatHistory([{ id: "", userQuestion: "", gptResponse: "" }]);
       // Clear chat input if there's any text
       if (inputRef.current) {
-        inputRef.current.value = ""
-        setQuestion("")
+        inputRef.current.value = "";
+        setQuestion("");
       }
-      setLoading(false)
+      setLoading(false);
     } else {
-      setTranscript("Error fetching captions")
-      setLoading(false)
+      setTranscript("Error fetching captions");
+      setLoading(false);
     }
-  }
+  };
 
   // function to send the question to the gpt and get the response
   const handleSend = async (e) => {
-    e.preventDefault()
-    setIsGenerating(true)
-    const id = uuidv4()
-    setChatHistory([...chatHistory, {id, userQuestion: question, gptResponse: ""}])
+    e.preventDefault();
+    setIsGenerating(true);
+    const id = uuidv4();
+    setChatHistory([
+      ...chatHistory,
+      { id, userQuestion: question, gptResponse: "" },
+    ]);
 
     const response = await axios.post(`${BACKEND_URL}/api/gpt-response`, {
       transcript,
       question,
-    })
-    if(response.data.success) {
-      setGptResponse(response.data.data)
-      console.log("gptResponse is: ", response.data.data)
-      setChatHistory([...chatHistory, { id, userQuestion: question, gptResponse: response.data.data}])
-      
+    });
+    if (response.data.success) {
+      setGptResponse(response.data.data);
+      setChatHistory([
+        ...chatHistory,
+        { id, userQuestion: question, gptResponse: response.data.data },
+      ]);
     } else {
-      setGptResponse("Error fetching response")
+      setGptResponse("Error fetching response");
     }
-    setIsGenerating(false)
-  }
+    setIsGenerating(false);
+  };
 
   return (
     <div className="min-h-screen w-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white">
@@ -97,21 +104,21 @@ export default function Homepage() {
             Get accurate transcripts from any YouTube video in seconds
             <br /> and chat with the AI assistant
           </p>
-          
+
           {/* Search Form */}
           <form onSubmit={handleSubmit} className="max-w-2xl mx-auto">
             <div className="flex flex-col sm:flex-row gap-4">
-              <input 
-                type="text" 
-                placeholder="Paste YouTube URL here..." 
-                value={youtubeUrl} 
+              <input
+                type="text"
+                placeholder="Paste YouTube URL here..."
+                value={youtubeUrl}
                 required
                 disabled={loading}
                 onChange={(e) => setYoutubeUrl(e.target.value)}
                 className="flex-1 px-6 py-4 rounded-lg bg-gray-800 border border-gray-700 focus:outline-none focus:border-blue-500 text-white placeholder-gray-400"
               />
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 disabled={loading}
                 className="px-8 py-4 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -121,13 +128,12 @@ export default function Homepage() {
                     Processing...
                   </div>
                 ) : (
-                  'Chat with Video'
+                  "Chat with Video"
                 )}
               </button>
             </div>
           </form>
         </div>
-
 
         {/* Results Section */}
         {transcript && (
@@ -137,31 +143,76 @@ export default function Homepage() {
               <div className="flex flex-col gap-6">
                 {/* Embedded Video */}
                 <div className="bg-gray-800 rounded-xl p-6 shadow-xl border border-gray-700">
-                  <h2 className="text-xl font-semibold mb-4 text-gray-200">Video</h2>
+                  <h2 className="text-xl font-semibold mb-4 text-gray-200">
+                    Video
+                  </h2>
                   <div className="aspect-w-16 aspect-h-9">
-                    <iframe
-                      src={`https://www.youtube.com/embed/${extractVideoId(youtubeUrl)}`}
+                    <YouTube
+                      videoId={extractVideoId(youtubeUrl)}
+                      opts={{
+                        height: "300",
+                        width: "100%",
+                        playerVars: {
+                          // Add any player parameters here (autoplay, controls, etc)
+                        },
+                      }}
+                      onReady={(event) => {
+                        // When YouTube player is ready, save a reference to it
+                        // so we can control it later (like seeking to timestamps)
+                        youtubePlayerRef.current = event.target;
+                      }}
                       className="w-full h-[300px] rounded-lg"
-                      allowFullScreen
-                      title="YouTube video player"
                     />
                   </div>
                 </div>
-                
+
                 {/* Transcript Box */}
                 <div className="bg-gray-800 rounded-xl p-6 shadow-xl border border-gray-700">
-                  <h2 className="text-xl font-semibold mb-4 text-gray-200">Generated Transcript</h2>
+                  <h2 className="text-xl font-semibold mb-4 text-gray-200">
+                    Generated Transcript
+                  </h2>
                   <div className="bg-gray-900 rounded-lg p-4 h-[300px] overflow-y-auto">
-                    {transcript.map((caption, index) => (
-                      <p key={index} className="text-gray-300 text-justify whitespace-pre-line">{caption.start} - {caption.text}</p>
-                    ))}
+                    {transcript.map((caption, index) => {
+                      // seconds is caption.start
+                      // const hours = Math.floor(caption.start / 3600).toString().padStart(2, '0')
+                      const minutes = Math.floor(caption.start / 60)
+                        .toString()
+                        .padStart(2, "0");
+                      const seconds = Math.floor(caption.start % 60)
+                        .toString()
+                        .padStart(2, "0");
+
+                      return (
+                        <p
+                          key={index}
+                          className="text-gray-300 text-justify whitespace-pre-line"
+                        >
+                          <span
+                            className="text-blue-400 hover:text-blue-300 cursor-pointer"
+                            onClick={() => {
+                              if (youtubePlayerRef.current) {
+                                youtubePlayerRef.current.seekTo(
+                                  caption.start,
+                                  true
+                                );
+                              }
+                            }}
+                          >
+                            {`${minutes}:${seconds}`}
+                          </span>{" "}
+                          <br /> {caption.text}
+                        </p>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
 
               {/* Right Section - Chat Box */}
               <div className="bg-gray-800 rounded-xl p-6 shadow-xl border border-gray-700">
-                <h2 className="text-xl font-semibold mb-4 text-gray-200">Chat with GPT</h2>
+                <h2 className="text-xl font-semibold mb-4 text-gray-200">
+                  Chat with GPT
+                </h2>
                 <div className="bg-gray-900 rounded-lg p-4 h-[700px] flex flex-col">
                   <div ref={chatBoxRef} className="flex-1 overflow-y-auto mb-4">
                     {/* Chat messages would go here */}
@@ -181,22 +232,36 @@ export default function Homepage() {
                             <div className="bg-purple-500 text-white px-4 py-2 rounded-lg max-w-[80%]">
                               <Markdown
                                 components={{
-                                  ol: ({children}) => <ol className="list-decimal ml-4 mt-2">{children}</ol>,
-                                  ul: ({children}) => <ul className="list-disc ml-4 mt-2">{children}</ul>,
-                                  li: ({children}) => <li className="ml-4 mt-2">{children}</li>
+                                  ol: ({ children }) => (
+                                    <ol className="list-decimal ml-4 mt-2">
+                                      {children}
+                                    </ol>
+                                  ),
+                                  ul: ({ children }) => (
+                                    <ul className="list-disc ml-4 mt-2">
+                                      {children}
+                                    </ul>
+                                  ),
+                                  li: ({ children }) => (
+                                    <li className="ml-4 mt-2">{children}</li>
+                                  ),
                                 }}
-                              >{message.gptResponse}</Markdown>
+                              >
+                                {message.gptResponse}
+                              </Markdown>
                             </div>
                           </div>
-                        ) : message.userQuestion && (
-                          <div className="flex text-left justify-start">
-                            <div className="bg-purple-500 text-white px-4 py-2 rounded-lg max-w-[80%]">
-                              <div className="flex items-center">
-                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                Generating answer
+                        ) : (
+                          message.userQuestion && (
+                            <div className="flex text-left justify-start">
+                              <div className="bg-purple-500 text-white px-4 py-2 rounded-lg max-w-[80%]">
+                                <div className="flex items-center">
+                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                  Generating answer
+                                </div>
                               </div>
                             </div>
-                          </div>
+                          )
                         )}
                       </div>
                     ))}
@@ -212,7 +277,11 @@ export default function Homepage() {
                       placeholder="Ask something about the video..."
                       className="flex-1 px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 focus:outline-none focus:border-blue-500 text-white placeholder-gray-400"
                     />
-                    <button type="submit" disabled={loading || isGenerating} className="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <button
+                      type="submit"
+                      disabled={loading || isGenerating}
+                      className="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
                       Send
                     </button>
                   </form>
@@ -224,11 +293,15 @@ export default function Homepage() {
       </div>
 
       {/* Footer */}
-      <footer className={`${!transcript ? "fixed" : ""} bottom-0 left-0 right-0 py-8 border-t border-gray-800`}>
+      <footer
+        className={`${
+          !transcript ? "fixed" : ""
+        } bottom-0 left-0 right-0 py-8 border-t border-gray-800`}
+      >
         <div className="max-w-7xl mx-auto px-4 text-center text-gray-400">
           <p>Made with ❤️ by Sharan</p>
         </div>
       </footer>
     </div>
-  )
+  );
 }
