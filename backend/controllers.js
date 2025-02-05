@@ -9,9 +9,15 @@ export const getCaptions = async (req, res) => {
             videoID: videoId, // youtube video id
             lang: 'en' // default: `en`
         })
-        // I want only the text of the captions and join the resultant strings from the array
-        const textCaptions = captions.map(caption => caption.text).join(" ")
-        res.json({ success: true, data: textCaptions })
+        
+        // Extracting start time and text from the captions
+        let dataArray = []
+        captions.forEach(caption => {
+            dataArray.push({start: caption.start, text: caption.text})
+        })
+        
+        console.log(dataArray)
+        res.json({ success: true, data: dataArray })
     } catch (error) {
         console.log(error)
         res.json({ success: false, error: error })

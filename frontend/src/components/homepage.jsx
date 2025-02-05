@@ -6,38 +6,15 @@ const BACKEND_URL = "http://localhost:8090"
 // const BACKEND_URL = "https://ai-youtube-video-transcript-generator.onrender.com"
 
 export default function Homepage() {
-  // Load initial state from localStorage if available
-  const [youtubeUrl, setYoutubeUrl] = useState(() => { // youtube video url
-    const saved = localStorage.getItem('youtubeUrl')
-    return saved || ""
-  })
-  const [transcript, setTranscript] = useState(() => { // transcript of the youtube video
-    const saved = localStorage.getItem('transcript')
-    return saved || ""
-  })
+  const [youtubeUrl, setYoutubeUrl] = useState("") // youtube video url
+  const [transcript, setTranscript] = useState([]) // transcript of the youtube video
   const [loading, setLoading] = useState(false) // loading state
   const [question, setQuestion] = useState("") // user question
   const [gptResponse, setGptResponse] = useState("") // gpt response
   const [isGenerating, setIsGenerating] = useState(false) // state of generating response in chatbox
-  const [chatHistory, setChatHistory] = useState(() => { // chat history
-    const saved = localStorage.getItem('chatHistory')
-    return saved ? JSON.parse(saved) : [{id: "", userQuestion: "", gptResponse: ""}]
-  })
+  const [chatHistory, setChatHistory] = useState([{id: "", userQuestion: "", gptResponse: ""}]) // chat history
   const chatBoxRef = useRef(null) // reference to chatbox
   const inputRef = useRef(null) // reference to input field 
-
-  // Save state to localStorage whenever it changes
-  useEffect(() => {
-    localStorage.setItem('youtubeUrl', youtubeUrl)
-  }, [youtubeUrl])
-
-  useEffect(() => {
-    localStorage.setItem('transcript', transcript)
-  }, [transcript])
-
-  useEffect(() => {
-    localStorage.setItem('chatHistory', JSON.stringify(chatHistory))
-  }, [chatHistory])
 
   // Scroll to bottom of chat whenever chatHistory updates
   useEffect(() => {
@@ -69,7 +46,9 @@ export default function Homepage() {
       videoId,
     })
     if(response.data.success) { 
-      setTranscript(response.data.data)
+        setTranscript(response.data.data)
+        console.log(transcript)
+
       // Reset chat history when new transcript is loaded
       setChatHistory([{id: "", userQuestion: "", gptResponse: ""}])
       // Clear chat input if there's any text
@@ -149,6 +128,7 @@ export default function Homepage() {
           </form>
         </div>
 
+
         {/* Results Section */}
         {transcript && (
           <div className="mt-12 max-w-7xl mx-auto">
@@ -172,7 +152,9 @@ export default function Homepage() {
                 <div className="bg-gray-800 rounded-xl p-6 shadow-xl border border-gray-700">
                   <h2 className="text-xl font-semibold mb-4 text-gray-200">Generated Transcript</h2>
                   <div className="bg-gray-900 rounded-lg p-4 h-[300px] overflow-y-auto">
-                    <p className="text-gray-300 text-justify whitespace-pre-line">{transcript}</p>
+                    {transcript.map((caption, index) => (
+                      <p key={index} className="text-gray-300 text-justify whitespace-pre-line">{caption.start} - {caption.text}</p>
+                    ))}
                   </div>
                 </div>
               </div>
