@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 import Markdown from "react-markdown";
-const BACKEND_URL = "http://localhost:8090";
+const BACKEND_URL = "http://localhost:8010";
 // const BACKEND_URL = "https://ai-youtube-video-transcript-generator.onrender.com"
 import YouTube from "react-youtube";
 
@@ -51,6 +51,7 @@ export default function Homepage() {
     });
     if (response.data.success) {
       setTranscript(response.data.data);
+      console.log(transcript)
 
       // Reset chat history when new transcript is loaded
       setChatHistory([{ id: "", userQuestion: "", gptResponse: "" }]);
@@ -173,8 +174,7 @@ export default function Homepage() {
                   </h2>
                   <div className="bg-gray-900 rounded-lg p-4 h-[300px] overflow-y-auto">
                     {transcript.map((caption, index) => {
-                      // seconds is caption.start
-                      // const hours = Math.floor(caption.start / 3600).toString().padStart(2, '0')
+                    //   const hours = Math.floor(caption.start / 3600).toString().padStart(2, '0')
                       const minutes = Math.floor(caption.start / 60)
                         .toString()
                         .padStart(2, "0");
@@ -216,7 +216,7 @@ export default function Homepage() {
                 <div className="bg-gray-900 rounded-lg p-4 h-[700px] flex flex-col">
                   <div ref={chatBoxRef} className="flex-1 overflow-y-auto mb-4">
                     {/* Chat messages would go here */}
-                    {chatHistory.map((message) => (
+                    {chatHistory.map((message) => (                        
                       <div key={message.id} className="mb-4">
                         {/* User Question */}
                         {message.userQuestion && (

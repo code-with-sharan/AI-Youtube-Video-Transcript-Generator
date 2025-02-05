@@ -7,7 +7,7 @@ dotenv.config();
 
 app.use(express.json())
 app.use(cors())
-const PORT = 8090
+const PORT = 8010
 
 // api endpoints
 app.use("/api", routes)
