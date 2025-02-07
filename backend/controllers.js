@@ -23,7 +23,7 @@ export const getCaptions = async (req, res) => {
     }
 }
 
-export const getResponseFromGPT = async (req, res) => {
+export const getStreamResponseFromGPT = async (req, res) => {
     try {
         const { transcript, question } = req.body
         const transcriptText = transcript.map(caption => caption.text).join(" ")
@@ -37,7 +37,7 @@ export const getResponseFromGPT = async (req, res) => {
         })
 
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
         const prompt = `
     Role: You are a YouTube Transcript Expert with precise timestamp knowledge. Your goal is to help users understand video content using both transcript text and exact timestamps.
 
@@ -76,9 +76,21 @@ Additional tips appear at [**05:42**] about memory consolidation.
 User Question: """${question}"""
     `;
 
-        const result = await model.generateContent(prompt);
-        const gptResponse = result.response.text()
-        res.json({ success: true, data: gptResponse })
+        // Get streaming result
+        const result = await model.generateContentStream(prompt); 
+        // Set headers for streaming
+        res.setHeader('Content-Type', 'text/plain'); // Set Content-Type to text/plain since we're sending raw text chunks
+        res.setHeader('Transfer-Encoding', 'chunked') // Enable streaming response in chunks
+
+        // stream chunks to the client
+        for await (const chunk of result.stream) {
+            const chunkText = chunk.text()            
+            res.write(chunkText)
+            // Force flush the response buffer to ensure immediate delivery
+            await new Promise(resolve => process.nextTick(resolve))
+        }
+
+        res.end()
     } catch (error) {
         res.json({ success: false, error: error })
     }

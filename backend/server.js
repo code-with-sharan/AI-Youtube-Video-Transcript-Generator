@@ -4,10 +4,10 @@ import cors from "cors"
 import routes from "./routes.js"
 import dotenv from "dotenv";
 dotenv.config();
+const PORT = 8010
 
 app.use(express.json())
 app.use(cors())
-const PORT = 8010
 
 // api endpoints
 app.use("/api", routes)

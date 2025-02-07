@@ -11,25 +11,26 @@ export default function Homepage() {
   const [transcript, setTranscript] = useState([]); // transcript of the youtube video
   const [loading, setLoading] = useState(false); // loading state
   const [question, setQuestion] = useState(""); // user question
-  const [gptResponse, setGptResponse] = useState(""); // gpt response
-  const [isGenerating, setIsGenerating] = useState(false); // state of generating response in chatbox
+  const [isGeneratingGptResponse, setIsGeneratingGptResponse] = useState(false); // loading state of generating response in chatbox
   const [chatHistory, setChatHistory] = useState([
     { id: "", userQuestion: "", gptResponse: "" },
   ]); // chat history
   const chatBoxRef = useRef(null); // reference to chatbox
-  const inputRef = useRef(null); // reference to input field
-  const youtubePlayerRef = useRef(null);
+  const inputRef = useRef(null); // reference to input field of chatbox
+  const youtubePlayerRef = useRef(null); // reference to embedded youtube video
 
   // Scroll to bottom of chat whenever chatHistory updates
   useEffect(() => {
+    // This code automatically scrolls the chat box to the bottom whenever new messages are added
     if (chatBoxRef.current) {
       chatBoxRef.current.scrollTo({
         top: chatBoxRef.current.scrollHeight,
         behavior: "smooth",
       });
     }
+
     if (inputRef.current) {
-      inputRef.current.value = ""; // Clear input using ref
+      inputRef.current.value = ""; // Clear the input field value directly using the ref whenever input field is updated
     }
   }, [chatHistory, inputRef]);
 
@@ -41,7 +42,7 @@ export default function Homepage() {
   }
 
   // function to submit the youtube url and get the transcript
-  const handleSubmit = async (e) => {
+  const handleSubmitYoutubeUrl = async (e) => {
     e.preventDefault();
     setLoading(true);
     const videoId = extractVideoId(youtubeUrl);
@@ -51,11 +52,10 @@ export default function Homepage() {
     });
     if (response.data.success) {
       setTranscript(response.data.data);
-      console.log(transcript)
-
+        
       // Reset chat history when new transcript is loaded
       setChatHistory([{ id: "", userQuestion: "", gptResponse: "" }]);
-      // Clear chat input if there's any text
+      // Clear chat input from chatbox if there's any text in it
       if (inputRef.current) {
         inputRef.current.value = "";
         setQuestion("");
@@ -70,27 +70,61 @@ export default function Homepage() {
   // function to send the question to the gpt and get the response
   const handleSend = async (e) => {
     e.preventDefault();
-    setIsGenerating(true);
+    setLoading(true);
     const id = uuidv4();
-    setChatHistory([
-      ...chatHistory,
-      { id, userQuestion: question, gptResponse: "" },
-    ]);
 
-    const response = await axios.post(`${BACKEND_URL}/api/gpt-response`, {
-      transcript,
-      question,
+    // Add new message with empty gpt response
+    setChatHistory(prev => [...prev, { id, userQuestion: question, gptResponse: "" }]);
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/gpt-response-stream`,{
+        method: "POST",
+        headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        transcript,
+        question,
+      }),
     });
-    if (response.data.success) {
-      setGptResponse(response.data.data);
-      setChatHistory([
-        ...chatHistory,
-        { id, userQuestion: question, gptResponse: response.data.data },
-      ]);
-    } else {
-      setGptResponse("Error fetching response");
+    if (!response.ok) throw new Error('Network response error');
+    // Create a reader to read the streaming response body chunk by chunk
+    const reader = response.body.getReader();
+    // Create a decoder to convert the binary chunks into text
+    const decoder = new TextDecoder();
+    // Variable to store the accumulated response text as chunks arrive
+    let accumulatedText = '';
+
+    // Read chunks from the stream until done
+    while (true) {
+      // Get next chunk from reader - returns {done, value} where value is Uint8Array
+      const { done, value } = await reader.read();
+      // Exit loop when stream is finished (done=true)
+      if (done) break;
+      
+      // Decode binary chunk to text using TextDecoder
+      // stream:true option maintains decoder state between chunks
+      const chunk = decoder.decode(value, { stream: true });
+      // Add decoded chunk text to accumulated response
+      accumulatedText += chunk;
+
+      // Update chat history to show streaming response
+      // Find message with matching id and update its gptResponse
+      // Leave other messages unchanged
+      setChatHistory(prev => prev.map(msg => 
+        msg.id === id ? { ...msg, gptResponse: accumulatedText } : msg
+      ));
     }
-    setIsGenerating(false);
+
+  } catch (error) {
+    console.error('Error:', error);
+    setChatHistory(prev => prev.map(msg => 
+      msg.id === id ? { ...msg, gptResponse: "Error generating response" } : msg
+    ));
+    } finally {
+      setLoading(false)
+      setQuestion("")
+    }
   };
 
   return (
@@ -107,7 +141,7 @@ export default function Homepage() {
           </p>
 
           {/* Search Form */}
-          <form onSubmit={handleSubmit} className="max-w-2xl mx-auto">
+          <form onSubmit={handleSubmitYoutubeUrl} className="max-w-2xl mx-auto">
             <div className="flex flex-col sm:flex-row gap-4">
               <input
                 type="text"
@@ -245,6 +279,14 @@ export default function Homepage() {
                                   li: ({ children }) => (
                                     <li className="ml-4 mt-2">{children}</li>
                                   ),
+                                  p: ({ children }) => (
+                                    <p className="mb-2 last:mb-0">{children}</p>
+                                  ),
+                                  code: ({ children }) => (
+                                    <code className="bg-gray-700 px-1 py-0.5 rounded">
+                                      {children}
+                                    </code>
+                                  ),
                                 }}
                               >
                                 {message.gptResponse}
@@ -254,10 +296,14 @@ export default function Homepage() {
                         ) : (
                           message.userQuestion && (
                             <div className="flex text-left justify-start">
-                              <div className="bg-purple-500 text-white px-4 py-2 rounded-lg max-w-[80%]">
+                              <div className=" text-white px-4 py-2 rounded-lg max-w-[80%]">
                                 <div className="flex items-center">
-                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                  Generating answer
+                                  Thinking
+                                  <span className="font-bold ml-1">
+                                    <span className="animate-bounce inline-block">.</span>
+                                    <span className="animate-bounce inline-block" style={{animationDelay: "150ms"}}>.</span>
+                                    <span className="animate-bounce inline-block" style={{animationDelay: "300ms"}}>.</span>
+                                  </span>
                                 </div>
                               </div>
                             </div>
@@ -273,13 +319,13 @@ export default function Homepage() {
                       value={question}
                       required
                       onChange={(e) => setQuestion(e.target.value)}
-                      disabled={loading || isGenerating}
+                      disabled={loading}
                       placeholder="Ask something about the video..."
                       className="flex-1 px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 focus:outline-none focus:border-blue-500 text-white placeholder-gray-400"
                     />
                     <button
                       type="submit"
-                      disabled={loading || isGenerating}
+                      disabled={loading}
                       className="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Send
